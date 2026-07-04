@@ -120,6 +120,15 @@
     transition:border-color .2s;
   }
   .plate.error{border-color:var(--red);}
+  /* Wrapper anchors the floating alert to the bottom of the plate */
+  .plate-wrap{position:relative;flex-shrink:0;}
+  /* Small highlight when the plate is tapped with the step incomplete */
+  .plate.tap-pulse{animation:platePulse .55s ease;}
+  @keyframes platePulse{
+    0%{box-shadow:inset 0 4px 4px rgba(0,0,0,.18),0 0 0 0 rgba(224,160,23,.5);}
+    60%{box-shadow:inset 0 4px 4px rgba(0,0,0,.18),0 0 0 5px rgba(224,160,23,.15);}
+    100%{box-shadow:inset 0 4px 4px rgba(0,0,0,.18),0 0 0 0 rgba(224,160,23,0);}
+  }
   .plate .code{
     width:52px;display:flex;align-items:center;justify-content:center;
     font-family:"Roboto",Arial,sans-serif;font-weight:700;font-size:30px;color:#0d0d0d;
@@ -139,11 +148,12 @@
 
   /* ---------- Alert ---------- */
   .alert{
-    z-index:40;
-    width:315px;max-width:calc(100% - 24px);margin:12px auto 0;display:none;align-items:center;gap:8px;
+    position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);z-index:40;
+    width:max-content;max-width:min(315px, calc(100vw - 24px));display:none;align-items:center;gap:8px;
     --accent:#e5484d;
     background:var(--red-50);border:none;border-radius:8px;
     padding:9px 12px;font-size:12px;color:#b42318;font-weight:500;
+    box-shadow:0 8px 24px rgba(0,0,0,.14);pointer-events:none;
   }
   .alert.warn{--accent:#e0a017;background:#fff8ea;color:#8a5a00;}
   .alert.show{display:flex;}
@@ -309,21 +319,23 @@
 
     <!-- Body -->
     <div class="content">
-      <!-- Plate preview -->
-      <div class="plate" id="plate">
-        <div class="code placeholder" id="plateCode">0</div>
-        <div class="emirate">
-          <span class="ar" id="plateAr">الإمارات</span>
-          <span class="ar" id="plateAr2">&nbsp;</span>
-          <span class="code-abbr" id="plateAbbr">U.A.E</span>
+      <!-- Plate preview (wrapper anchors the floating alert) -->
+      <div class="plate-wrap">
+        <div class="plate" id="plate">
+          <div class="code placeholder" id="plateCode">0</div>
+          <div class="emirate">
+            <span class="ar" id="plateAr">الإمارات</span>
+            <span class="ar" id="plateAr2">&nbsp;</span>
+            <span class="code-abbr" id="plateAbbr">U.A.E</span>
+          </div>
+          <div class="number placeholder" id="plateNumber">00000</div>
         </div>
-        <div class="number placeholder" id="plateNumber">00000</div>
-      </div>
 
-      <!-- Alert -->
-      <div class="alert" id="alert">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="var(--accent)"/><path d="M8 4v5M8 11.2v.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
-        <span id="alertText"></span>
+        <!-- Alert (floats below the plate, out of flow) -->
+        <div class="alert" id="alert">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="var(--accent)"/><path d="M8 4v5M8 11.2v.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span id="alertText"></span>
+        </div>
       </div>
 
       <!-- Tabs -->
@@ -439,15 +451,21 @@ tabs.forEach(t=>t.addEventListener("click",()=>{
 
 // Tapping the plate preview with the current step incomplete surfaces the same
 // contextual warning the tabs do (based on the active tab).
+// Restart the one-shot highlight animation on the plate.
+function pulsePlate(){
+  plate.classList.remove("tap-pulse");
+  void plate.offsetWidth;               // force reflow so the animation replays
+  plate.classList.add("tap-pulse");
+}
 plate.addEventListener("click",()=>{
   const cur = document.querySelector(".tab.active")?.dataset.tab;
   if(cur==="emirate"){
-    if(!state.emirate) showAlert("Choose an emirate to continue",{warn:true});
+    if(!state.emirate){ showAlert("Choose an emirate to continue",{warn:true}); pulsePlate(); }
   } else if(cur==="code"){
-    if(!state.code) showAlert("Share a plate code",{warn:true});
-    else if(!isCodeValid(state.code)) codeError();
+    if(!state.code){ showAlert("Share a plate code",{warn:true}); pulsePlate(); }
+    else if(!isCodeValid(state.code)){ codeError(); pulsePlate(); }
   } else if(cur==="number"){
-    if(!state.number) showAlert("Enter a plate number",{warn:true});
+    if(!state.number){ showAlert("Enter a plate number",{warn:true}); pulsePlate(); }
   }
 });
 
