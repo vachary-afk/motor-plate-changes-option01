@@ -28,7 +28,7 @@
     --white:#ffffff;
     --black:#000000;
   }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
   html,body{height:100%;}
   body{
     margin:0;
@@ -602,13 +602,10 @@ function toast(msg){
 
 /* ---------------- Continue ---------------- */
 function updateContinue(){
-  // Continue appears on EVERY selection screen once that screen's step is satisfied,
-  // then slides in from the bottom.
+  // Continue is the final CTA — it only appears on the Plate number screen once a
+  // number is entered. Emirate and Plate code advance via the tabs.
   const cur = document.querySelector(".tab.active")?.dataset.tab;
-  let ready=false;
-  if(cur==="emirate")      ready = !!state.emirate;
-  else if(cur==="code")    ready = isCodeValid(state.code);
-  else if(cur==="number")  ready = state.number.length>=1;
+  const ready = cur==="number" && state.number.length>=1;
   $("#continueBtn").classList.toggle("visible", ready);
 }
 function continueAction(){
