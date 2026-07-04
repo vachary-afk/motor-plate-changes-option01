@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="Motor insurance" />
 <meta name="theme-color" content="#ffffff" />
-<title>Motor 2.0 — Plate changes (Option 01)</title>
+<title>Share plate details</title>
 <style>
   :root{
     --brand:#1d68ff;
@@ -139,8 +139,8 @@
 
   /* ---------- Alert ---------- */
   .alert{
-    position:absolute;top:108px;left:50%;transform:translateX(-50%);z-index:40;
-    width:315px;display:none;align-items:center;gap:8px;
+    z-index:40;
+    width:315px;max-width:calc(100% - 24px);margin:12px auto 0;display:none;align-items:center;gap:8px;
     --accent:#e5484d;
     background:var(--red-50);border:none;border-radius:8px;
     padding:9px 12px;font-size:12px;color:#b42318;font-weight:500;
@@ -300,14 +300,6 @@
 
     <!-- Body -->
     <div class="content">
-      <h1 class="heading">Share plate details for instant quotes.</h1>
-
-      <!-- Alert -->
-      <div class="alert" id="alert">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="var(--accent)"/><path d="M8 4v5M8 11.2v.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
-        <span id="alertText"></span>
-      </div>
-
       <!-- Plate preview -->
       <div class="plate" id="plate">
         <div class="code placeholder" id="plateCode">0</div>
@@ -317,6 +309,12 @@
           <span class="code-abbr" id="plateAbbr">U.A.E</span>
         </div>
         <div class="number placeholder" id="plateNumber">00000</div>
+      </div>
+
+      <!-- Alert -->
+      <div class="alert" id="alert">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="var(--accent)"/><path d="M8 4v5M8 11.2v.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span id="alertText"></span>
       </div>
 
       <!-- Tabs -->
@@ -429,6 +427,20 @@ tabs.forEach(t=>t.addEventListener("click",()=>{
   }
   switchTab(target);
 }));
+
+// Tapping the plate preview with the current step incomplete surfaces the same
+// contextual warning the tabs do (based on the active tab).
+plate.addEventListener("click",()=>{
+  const cur = document.querySelector(".tab.active")?.dataset.tab;
+  if(cur==="emirate"){
+    if(!state.emirate) showAlert("Choose an emirate to continue",{warn:true});
+  } else if(cur==="code"){
+    if(!state.code) showAlert("Share a plate code",{warn:true});
+    else if(!isCodeValid(state.code)) codeError();
+  } else if(cur==="number"){
+    if(!state.number) showAlert("Enter a plate number",{warn:true});
+  }
+});
 
 /* ---------------- Emirate list ---------------- */
 const emirateList = $("#emirateList");
