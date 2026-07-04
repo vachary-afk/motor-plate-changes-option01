@@ -602,10 +602,13 @@ function toast(msg){
 
 /* ---------------- Continue ---------------- */
 function updateContinue(){
-  // Continue is the final CTA — it only appears on the Plate number screen once a
-  // number is entered. Emirate and Plate code advance via the tabs.
+  // Continue appears on EVERY selection screen once that screen's step is satisfied,
+  // then slides in from the bottom.
   const cur = document.querySelector(".tab.active")?.dataset.tab;
-  const ready = cur==="number" && state.number.length>=1;
+  let ready=false;
+  if(cur==="emirate")      ready = !!state.emirate;
+  else if(cur==="code")    ready = isCodeValid(state.code);
+  else if(cur==="number")  ready = state.number.length>=1;
   $("#continueBtn").classList.toggle("visible", ready);
 }
 function continueAction(){
