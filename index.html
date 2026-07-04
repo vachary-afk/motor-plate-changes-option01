@@ -120,8 +120,8 @@
     transition:border-color .2s;padding:8px 8px;
   }
   .plate.error{border-color:var(--red);}
-  /* Wrapper anchors the floating alert to the bottom of the plate */
-  .plate-wrap{position:relative;flex-shrink:0;}
+  /* Wrapper anchors the floating alert and keeps the plate centered */
+  .plate-wrap{position:relative;flex-shrink:0;width:100%;display:flex;justify-content:center;}
   /* Small highlight when the plate is tapped with the step incomplete */
   .plate.tap-pulse{animation:platePulse .55s ease;}
   @keyframes platePulse{
@@ -391,6 +391,8 @@ const SPECIAL_CODES = ["Classic","Code 9","White","Motor cycle 1","Grey","Red"];
 // surfaces the "'XX' is not a valid plate code" alert (Figma error frame).
 const CODE_MAX = 2;
 const isCodeValid = c => c.length>=1 && c.length<=CODE_MAX;
+// The plate-code step is satisfied by a valid typed code OR a chosen special code.
+const codeStepDone = () => state.code ? isCodeValid(state.code) : !!state.special;
 
 /* ---------------- State ---------------- */
 const state = { emirate:null, code:"", number:"", special:null };
@@ -438,12 +440,12 @@ tabs.forEach(t=>t.addEventListener("click",()=>{
     showAlert("Choose an emirate to continue",{warn:true});
     return;
   }
-  if(target==="number" && !state.code){
-    showAlert("Share a plate code",{warn:true});
+  if(target==="number" && state.code && !isCodeValid(state.code)){
+    codeError();
     return;
   }
-  if(target==="number" && !isCodeValid(state.code)){
-    codeError();
+  if(target==="number" && !state.code && !state.special){
+    showAlert("Share a plate code",{warn:true});
     return;
   }
   switchTab(target);
@@ -462,8 +464,8 @@ plate.addEventListener("click",()=>{
   if(cur==="emirate"){
     if(!state.emirate){ showAlert("Choose an emirate to continue",{warn:true}); pulsePlate(); }
   } else if(cur==="code"){
-    if(!state.code){ showAlert("Share a plate code",{warn:true}); pulsePlate(); }
-    else if(!isCodeValid(state.code)){ codeError(); pulsePlate(); }
+    if(state.code && !isCodeValid(state.code)){ codeError(); pulsePlate(); }
+    else if(!state.code && !state.special){ showAlert("Share a plate code",{warn:true}); pulsePlate(); }
   } else if(cur==="number"){
     if(!state.number){ showAlert("Enter a plate number",{warn:true}); pulsePlate(); }
   }
@@ -570,6 +572,8 @@ SPECIAL_CODES.forEach(c=>{
     state.special = on ? null : c;
     document.querySelectorAll(".chip").forEach(x=>x.classList.remove("selected"));
     if(!on) chip.classList.add("selected");
+    hideAlert();
+    updateContinue();          // a chosen special code satisfies the plate-code step
   });
   chips.appendChild(chip);
 });
@@ -625,7 +629,7 @@ function updateContinue(){
   const cur = document.querySelector(".tab.active")?.dataset.tab;
   let ready=false;
   if(cur==="emirate")      ready = !!state.emirate;
-  else if(cur==="code")    ready = isCodeValid(state.code);
+  else if(cur==="code")    ready = codeStepDone();
   else if(cur==="number")  ready = state.number.length>=1;
   $("#continueBtn").classList.toggle("visible", ready);
 }
@@ -635,8 +639,8 @@ function continueAction(){
     if(!state.emirate){ showAlert("Choose an emirate to continue",{warn:true}); return; }
     switchTab("code");
   } else if(cur==="code"){
-    if(!state.code){ showAlert("Share a plate code",{warn:true}); return; }
-    if(!isCodeValid(state.code)){ codeError(); return; }
+    if(state.code && !isCodeValid(state.code)){ codeError(); return; }
+    if(!state.code && !state.special){ showAlert("Share a plate code",{warn:true}); return; }
     switchTab("number");
   } else {
     if(!state.number.length) return;
